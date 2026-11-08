@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Seeker</title>
+    <!-- Marked.js library markdown formatting ke liye -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 650px;
+            height: 85vh;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        /* Markdown formatting styles inside AI messages */
+        .ai-message p {
+            margin: 0 0 10px 0;
+        }
+        .ai-message p:last-child {
+            margin-bottom: 0;
+        }
+        .ai-message strong {
+            font-weight: 700;
+            color: #1a252f;
+        }
+        .ai-message ul, .ai-message ol {
+            margin: 5px 0 5px 20px;
+            padding: 0;
+        }
+        .user-message {
+            background-color: #3498db;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 3px;
+        }
+        .ai-message {
+            background-color: #e4e6eb;
+            color: #333333;
+            align-self: flex-start;
+            border-bottom-left-radius: 3px;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            background-color: #ffffff;
+            border-top: 1px solid #e4e6eb;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ccd0d5;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+        .chat-input-area button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            margin-left: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .chat-input-area button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">Knowledge Seeker</div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">Hello! How can I help you explore knowledge or solve your problems today?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById("userInput");
+            const messageText = inputField.value.trim();
+            if (!messageText) return;
+
+            const chatMessages = document.getElementById("chatMessages");
+
+            // Add user message to UI
+            const userDiv = document.createElement("div");
+            userDiv.className = "message user-message";
+            userDiv.textContent = messageText;
+            chatMessages.appendChild(userDiv);
+
+            inputField.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // AI loading placeholder
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "message ai-message";
+            aiDiv.textContent = "Thinking...";
+            chatMessages.appendChild(aiDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: messageText })
+                });
+
+                const data = await response.json();
+                if (data.response) {
+                    // Marked library ka istemal karke markdown ko proper HTML mein convert kiya hai
+                    aiDiv.innerHTML = marked.parse(data.response);
+                } else {
+                    aiDiv.textContent = "Error: " + (data.error || "Something went wrong.");
+                }
+            } catch (err) {
+                aiDiv.textContent = "Could not connect to the server.";
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
