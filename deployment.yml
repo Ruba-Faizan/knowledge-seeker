@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knowledge-seeker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: knowledge-seeker
+  template:
+    metadata:
+      labels:
+        app: knowledge-seeker
+    spec:
+      containers:
+      - name: chatbot-container
+        image: your-docker-username/knowledge-seeker:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-secret
+              key: GEMINI_API_KEY
